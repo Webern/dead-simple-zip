@@ -30,7 +30,7 @@ set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE PATH "Installation directory f
 set(INSTALL_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE PATH "Installation directory for headers")
 set(INSTALL_MAN_DIR ${CMAKE_INSTALL_MANDIR} CACHE PATH "Installation directory for manual pages")
 set(INSTALL_PKGCONFIG_DIR ${CMAKE_INSTALL_LIBDIR}/pkgconfig CACHE PATH "Installation directory for pkgconfig (.pc) files")
-set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/zlib CACHE PATH "Installation directory for cmake files.")
+set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/minizip CACHE PATH "Installation directory for cmake files.")
 
 set(VERSION "2.3.4")
 
@@ -38,19 +38,12 @@ set(VERSION "2.3.4")
 set(CMAKE_DEBUG_POSTFIX "d")
 
 # Ensure correct version of zlib is referenced
-#if(USE_ZLIB)
-#    set(ZLIB_ROOT ${DEF_ZLIB_ROOT} CACHE PATH "Parent directory of zlib installation")
-#    find_package(ZLIB REQUIRED)
-#    if(ZLIB_FOUND)
-#        include_directories(${ZLIB_INCLUDE_DIRS})
-#    endif()
-#    add_definitions(-DHAVE_ZLIB)
-#endif()
-
-# build Zlib from source instead of using find_package
 if(USE_ZLIB)
-    add_subdirectory(zlib)
-    include_directories(zlib)
+    set(ZLIB_ROOT ${DEF_ZLIB_ROOT} CACHE PATH "Parent directory of zlib installation")
+    find_package(ZLIB REQUIRED)
+    if(ZLIB_FOUND)
+        include_directories(${ZLIB_INCLUDE_DIRS})
+    endif()
     add_definitions(-DHAVE_ZLIB)
 endif()
 
@@ -176,7 +169,7 @@ if(USE_ZLIB)
     list(APPEND MINIZIP_PUBLIC_HEADERS "mz_strm_zlib.h")
 
     include(CheckFunctionExists)
-    set(CMAKE_REQUIRED_LIBRARIES zlib)
+    set(CMAKE_REQUIRED_LIBRARIES ZLIB::ZLIB)
     CHECK_FUNCTION_EXISTS(z_get_crc_table
         NEEDS_Z_PREFIX)
 
@@ -336,7 +329,7 @@ endif()
 # Create minizip library
 source_group("Minizip" FILES ${MINIZIP_SRC} ${MINIZIP_PUBLIC_HEADERS})
 
-add_library(${PROJECT_NAME} STATIC
+add_library(${PROJECT_NAME}
                 ${MINIZIP_SRC} ${MINIZIP_PUBLIC_HEADERS}
                 ${AES_SRC} ${AES_PUBLIC_HEADERS}
                 ${BZIP2_SRC} ${BZIP2_PUBLIC_HEADERS}
@@ -349,8 +342,7 @@ endif ()
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C PREFIX ""
                       POSITION_INDEPENDENT_CODE 1)
 if(USE_ZLIB)
-#    target_link_libraries(${PROJECT_NAME} ZLIB::ZLIB)
-    target_link_libraries(${PROJECT_NAME} PRIVATE zlib)
+    target_link_libraries(${PROJECT_NAME} ZLIB::ZLIB)
 endif()
 if(USE_LZMA)
     set_target_properties(${PROJECT_NAME} PROPERTIES C_STANDARD 99)
@@ -361,29 +353,18 @@ endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC $<INSTALL_INTERFACE:${INSTALL_INC_DIR}>)
 
-#include(zlib)
-#install(TARGETS zlib EXPORT zlib
-#        INCLUDES DESTINATION "${INSTALL_INC_DIR}"
-#        RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
-#        ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
-#        LIBRARY DESTINATION "${INSTALL_LIB_DIR}")
+install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}
+        INCLUDES DESTINATION "${INSTALL_INC_DIR}"
+        RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+        ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
+        LIBRARY DESTINATION "${INSTALL_LIB_DIR}")
 
-#install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}
-#        INCLUDES DESTINATION "${INSTALL_INC_DIR}"
-#        RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
-#        ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
-#        LIBRARY DESTINATION "${INSTALL_LIB_DIR}")
+install(EXPORT ${PROJECT_NAME}
+        DESTINATION "${INSTALL_CMAKE_DIR}"
+        NAMESPACE "MINIZIP::")
 
-
-#install(EXPORT zlib
-#        DESTINATION "${INSTALL_CMAKE_DIR}"
-#        NAMESPACE "ZLIB::")
-
-#install(EXPORT ${PROJECT_NAME}
-#        DESTINATION "${INSTALL_CMAKE_DIR}"
-#        NAMESPACE "MINIZIP::")
-#install(FILES ${MINIZIP_PUBLIC_HEADERS} DESTINATION "${INSTALL_INC_DIR}")
-#install(FILES ${MINIZIP_PC} DESTINATION "${INSTALL_PKGCONFIG_DIR}")
+install(FILES ${MINIZIP_PUBLIC_HEADERS} DESTINATION "${INSTALL_INC_DIR}")
+install(FILES ${MINIZIP_PC} DESTINATION "${INSTALL_PKGCONFIG_DIR}")
 
 if(BUILD_TEST)
     add_executable(minizip "minizip.c")
