@@ -2,9 +2,9 @@
 
 namespace dszip
 {
-    class DsZip
+    class Archive
     {
     public:
-        DsZip();
+        virtual ~Archive() = default;
     };
 }
