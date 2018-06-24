@@ -4,6 +4,7 @@
 # Year:       2016
 #***************************************************************************
 cmake_minimum_required(VERSION 2.8)
+message("minizip cmake file begin")
 
 option(USE_ZLIB "Enables ZLIB compression" ON)
 option(USE_BZIP2 "Enables BZIP2 compression" ON)
@@ -350,7 +351,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C PREFIX ""
                       POSITION_INDEPENDENT_CODE 1)
 if(USE_ZLIB)
 #    target_link_libraries(${PROJECT_NAME} ZLIB::ZLIB)
-    target_link_libraries(${PROJECT_NAME} PRIVATE zlib)
+    target_link_libraries(${PROJECT_NAME} PRIVATE libz)
 endif()
 if(USE_LZMA)
     set_target_properties(${PROJECT_NAME} PROPERTIES C_STANDARD 99)
@@ -392,3 +393,5 @@ if(BUILD_TEST)
     install(TARGETS minizip
             RUNTIME DESTINATION "bin")
 endif()
+
+message("minizip cmake file end")
